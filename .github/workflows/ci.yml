@@ -1,4 +1,4 @@
-name: NeuroKey CI
+name: NeuroKey CI (Fedora)
 
 on:
   push:
@@ -7,50 +7,41 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test-and-build:
+  build:
     runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Install System Dependencies
+      run: |
+        dnf install -y \
+          git \
+          nodejs \
+          npm \
+          rust \
+          cargo \
+          gcc \
+          gcc-c++ \
+          make \
+          pkgconf-pkg-config \
+          openssl-devel \
+          webkit2gtk4.1-devel \
+          libayatana-appindicator-devel \
+          libsoup3-devel \
+          gtk3-devel \
+          pango-devel \
+          cairo-devel \
+          gdk-pixbuf2-devel \
+          glib2-devel
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
+    - uses: actions/checkout@v4
 
     - name: Install Frontend Dependencies
       run: npm install
 
-    - name: Frontend Build (TSC & Vite)
+    - name: Frontend Build
       run: npm run build
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: "./src-tauri -> target"
-
-    - name: Install System Dependencies (Tauri 2.0)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libwebkit2gtk-4.1-dev \
-          librsvg2-dev \
-          patchelf \
-          libjavascriptcoregtk-4.1-dev \
-          libsoup-3.0-dev \
-          pkg-config \
-          build-essential \
-          curl \
-          wget \
-          libssl-dev \
-          libgtk-3-dev \
-          libayatana-appindicator3-dev
 
     - name: Rust Check
       run: cargo check --manifest-path src-tauri/Cargo.toml
@@ -61,7 +52,6 @@ jobs:
     - name: Maintain Error Logs
       if: failure()
       run: |
-        echo "### Build Errors Detected" > error_log.txt
+        echo "### Fedora Build Failure Detected" > error_log.txt
         echo "Timestamp: $(date)" >> error_log.txt
-        echo "------------------------" >> error_log.txt
-        echo "Check the GitHub Actions logs for full stack traces." >> error_log.txt
+        echo "Check the GitHub Actions logs for the full DNF or Cargo trace." >> error_log.txt
