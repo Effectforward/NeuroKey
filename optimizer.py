@@ -235,22 +235,25 @@ def _sa_worker(worker_id: int, scorer_data: bytes, seed: int,
     print(f"[Worker {worker_id}] Best layout:\n{layout_to_string(best_layout)}")
 
 
-def optimize(scorer, resume: bool = False) -> Tuple[float, List[int]]:
+def optimize(scorer, resume: bool = False, workers: int = None, steps: int = None, cooling_str: str = None) -> Tuple[float, List[int]]:
     """
     Run parallel SA optimization.
     
     Args:
         scorer: Scorer instance
         resume:  If True, load existing checkpoints and continue
+        workers: Override config n_workers
+        steps: Override config steps_per_run
+        cooling_str: Override config cooling schedule
     
     Returns:
         (best_score, best_layout) across all workers
     """
-    n_workers   = SA['n_workers']
-    max_steps   = SA['steps_per_run']
+    n_workers   = workers if workers is not None else SA['n_workers']
+    max_steps   = steps if steps is not None else SA['steps_per_run']
     T_start     = SA['T_start']
     T_end       = SA['T_end']
-    cooling     = SA['cooling']
+    cooling     = cooling_str if cooling_str is not None else SA['cooling']
     ckpt_every  = SA['checkpoint_every']
     ckpt_dir    = PATHS['checkpoint']
     results_dir = PATHS['results']
@@ -294,10 +297,11 @@ def optimize(scorer, resume: bool = False) -> Tuple[float, List[int]]:
     global_best_score = float('inf')
     global_best_layout = None
     
-    def handle_sigint(sig, frame):
-        print("\n[Main] Interrupt received. Stopping workers gracefully...")
+    def handle_sigterm(sig, frame):
+        print("\n[Main] Terminate/Interrupt received. Stopping workers gracefully...")
         stop_event.set()
-    signal.signal(signal.SIGINT, handle_sigint)
+    signal.signal(signal.SIGINT, handle_sigterm)
+    signal.signal(signal.SIGTERM, handle_sigterm)
     
     # Collect results as they come in
     finished = 0

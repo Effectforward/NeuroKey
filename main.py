@@ -30,7 +30,7 @@ from analyze import (get_layout, print_layout, print_full_analysis,
                      compare_layouts, KNOWN_LAYOUTS)
 
 
-def cmd_optimize(resume: bool = False):
+def cmd_optimize(resume: bool = False, workers: int = None, steps: int = None, cooling: str = None):
     uni, bi, tri = build_ngrams()
     scorer = Scorer(uni, bi, tri)
     
@@ -40,7 +40,7 @@ def cmd_optimize(resume: bool = False):
     compare_layouts(baselines, scorer)
     
     print("\nStarting optimizer...\n")
-    best_score, best_layout = optimize(scorer, resume=resume)
+    best_score, best_layout = optimize(scorer, resume=resume, workers=workers, steps=steps, cooling_str=cooling)
     
     if best_layout:
         print(f"\n{'═'*60}")
@@ -148,7 +148,19 @@ def main():
     
     if cmd == 'optimize':
         resume = '--resume' in args
-        cmd_optimize(resume=resume)
+        workers = None
+        steps = None
+        cooling = None
+        
+        for i, arg in enumerate(args):
+            if arg == '--workers' and i+1 < len(args):
+                workers = int(args[i+1])
+            elif arg == '--steps' and i+1 < len(args):
+                steps = int(args[i+1])
+            elif arg == '--cooling' and i+1 < len(args):
+                cooling = args[i+1]
+                
+        cmd_optimize(resume=resume, workers=workers, steps=steps, cooling=cooling)
     
     elif cmd == 'analyze':
         if len(args) < 2:

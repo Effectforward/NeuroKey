@@ -20,6 +20,15 @@ fetch_repo() {
     lang=$1
     ext=$2
     repo=$3
+    target_file="data/corpus/$lang/data.txt"
+
+    if [ -s "$target_file" ]; then
+        lines=$(wc -l < "$target_file")
+        echo "  -> Data for $lang already exists ($lines lines). Skipping download."
+        echo ""
+        return
+    fi
+
     echo "Fetching $lang from $repo..."
     dir="/tmp/repo_$lang"
     rm -rf "$dir"
@@ -28,12 +37,12 @@ fetch_repo() {
     git clone --depth=1 "$repo" "$dir" 2>/dev/null || echo "  [!] Clone failed for $repo"
     
     # Find files of specific extension and concatenate them into our corpus
-    find "$dir" -name "*.$ext" -exec sh -c 'cat "$@" > "data/corpus/'$lang'/data.txt"' _ {} + 2>/dev/null || true
+    find "$dir" -name "*.$ext" -exec sh -c 'cat "$@" > "'$target_file'"' _ {} + 2>/dev/null || true
     
     rm -rf "$dir"
     
-    if [ -f "data/corpus/$lang/data.txt" ]; then
-        lines=$(wc -l < "data/corpus/$lang/data.txt")
+    if [ -s "$target_file" ]; then
+        lines=$(wc -l < "$target_file")
         echo "  -> Saved $lines lines of $lang code."
     else
         echo "  -> No $lang code found or saved."
