@@ -1,7 +1,36 @@
+# Python
 __pycache__/
 *.pyc
 data/corpus/
 data/ngrams_cache.pkl
 checkpoints/
 results/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Rust
+target/
+src-tauri/target/
+
+# Tauri
+src-tauri/gen/
+src-tauri/bin/
+
+# Data
+/data/
+/python_engine/data/
+*.csv
+*.json
+!package.json
+!tsconfig.json
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db

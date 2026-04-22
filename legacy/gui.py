@@ -6,11 +6,22 @@ import threading
 import subprocess
 import signal
 import psutil
+import atexit
 from flask import Flask, render_template_string, jsonify, request
 
 app = Flask(__name__)
 
 OPTIMIZER_PROCESS = None
+
+def cleanup_process():
+    global OPTIMIZER_PROCESS
+    if OPTIMIZER_PROCESS is not None:
+        try:
+            os.killpg(os.getpgid(OPTIMIZER_PROCESS.pid), signal.SIGTERM)
+        except Exception:
+            pass
+
+atexit.register(cleanup_process)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -18,7 +29,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OptiKey - Keyboard Layout Optimizer</title>
+    <title>NeuroKey - AI Keyboard Optimizer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -27,9 +38,9 @@ HTML_TEMPLATE = """
         :root {
             --bg-color: #0f172a;
             --surface: rgba(30, 41, 59, 0.7);
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --accent: #8b5cf6;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --accent: #3b82f6;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -47,8 +58,8 @@ HTML_TEMPLATE = """
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+                radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15), transparent 25%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -65,13 +76,13 @@ HTML_TEMPLATE = """
         }
 
         .header h1 {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            background: linear-gradient(135deg, #c084fc, #60a5fa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
-            letter-spacing: -1px;
+            letter-spacing: -2px;
         }
 
         .header p {
@@ -244,7 +255,7 @@ HTML_TEMPLATE = """
         }
         .chart-container {
             position: relative;
-            height: 200px;
+            height: 250px;
             width: 100%;
         }
 
@@ -258,8 +269,8 @@ HTML_TEMPLATE = """
 <body>
 
     <div class="header">
-        <h1>OptiKey Control Center</h1>
-        <p>AI-Powered Ergonomic Keyboard Layout Optimizer</p>
+        <h1>NeuroKey</h1>
+        <p>Advanced Parallel AI Keyboard Layout Optimizer</p>
     </div>
 
     <div class="dashboard">
@@ -272,12 +283,12 @@ HTML_TEMPLATE = """
                     <div class="keyboard-row" id="row3"></div>
                 </div>
                 <div class="score-display">
-                    <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Fitness Score</p>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Fitness Score (Lower is better)</p>
                     <div class="score-value" id="current-score">---.------</div>
                 </div>
             </div>
             <div class="logs" id="terminal-logs">
-                <p class="log-info">> System Initialized.</p>
+                <p class="log-info">> NeuroKey System Initialized.</p>
             </div>
         </div>
 
@@ -290,14 +301,22 @@ HTML_TEMPLATE = """
 
             <div class="settings-form">
                 <div>
-                    <label>CPU Workers (Cores)</label>
-                    <input type="number" id="cfg-workers" value="10" min="1" max="128">
+                    <label>Engine Strategy</label>
+                    <select id="cfg-engine">
+                        <option value="cpu">Simulated Annealing (CPU Multi-core)</option>
+                        <option value="gpu">PyTorch Tensor Batching (GPU)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>CPU Workers / GPU Batch Size</label>
+                    <input type="number" id="cfg-workers" value="10" min="1">
                 </div>
                 <div>
                     <label>Cooling Schedule</label>
                     <select id="cfg-cooling">
                         <option value="exponential">Exponential (Default)</option>
                         <option value="linear">Linear</option>
+                        <option value="cosine">Cosine</option>
                     </select>
                 </div>
                 <div>
@@ -313,15 +332,27 @@ HTML_TEMPLATE = """
 
     <div class="charts">
         <div class="glass-panel">
-            <h2>CPU & RAM Usage</h2>
+            <h2>System Telemetry (CPU, RAM, Temp)</h2>
             <div class="chart-container">
                 <canvas id="sysChart"></canvas>
             </div>
         </div>
         <div class="glass-panel">
-            <h2>Optimizer Temperature</h2>
-            <div class="chart-container" style="display:flex; justify-content:center; align-items:center;">
-                <p style="color:var(--text-muted); text-align:center;">Temperature drops as the algorithm fine-tunes the layout. <br/><br/><i>Currently only tracked via console logs.</i></p>
+            <h2>Algorithm Score vs Baselines</h2>
+            <div class="chart-container">
+                <canvas id="scoreChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-panel">
+            <h2>Algorithm Temperature</h2>
+            <div class="chart-container" style="height: 150px;">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-panel">
+            <h2>Performance (Evaluations / Sec)</h2>
+            <div class="chart-container" style="height: 150px;">
+                <canvas id="perfChart"></canvas>
             </div>
         </div>
     </div>
@@ -329,24 +360,78 @@ HTML_TEMPLATE = """
     <script>
         const FINGER = [0, 1, 2, 3, 3, 4, 4, 5, 6, 7, 0, 1, 2, 3, 3, 4, 4, 5, 6, 7, 0, 1, 2, 3, 3, 4, 4, 5, 6, 7];
         
-        // Setup Chart
-        const ctx = document.getElementById('sysChart').getContext('2d');
-        const sysChart = new Chart(ctx, {
+        // Setup Charts
+        const ctxSys = document.getElementById('sysChart').getContext('2d');
+        const sysChart = new Chart(ctxSys, {
             type: 'line',
             data: {
                 labels: Array(20).fill(''),
                 datasets: [
                     { label: 'CPU %', borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', data: Array(20).fill(0), fill: true, tension: 0.4 },
-                    { label: 'RAM %', borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', data: Array(20).fill(0), fill: true, tension: 0.4 }
+                    { label: 'RAM %', borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', data: Array(20).fill(0), fill: true, tension: 0.4 },
+                    { label: 'CPU Temp °C', borderColor: '#ef4444', backgroundColor: 'transparent', data: Array(20).fill(0), fill: false, tension: 0.4, borderDash: [5, 5] },
+                    { label: 'GPU Temp °C', borderColor: '#f59e0b', backgroundColor: 'transparent', data: Array(20).fill(0), fill: false, tension: 0.4, borderDash: [2, 2] }
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
-                animation: false,
+                responsive: true, maintainAspectRatio: false, animation: false,
                 scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } },
                 plugins: { legend: { labels: { color: '#fff' } } }
             }
         });
+
+        const ctxScore = document.getElementById('scoreChart').getContext('2d');
+        const scoreChart = new Chart(ctxScore, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [
+                    { label: 'NeuroKey Score', borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.2)', data: Array(20).fill(null), fill: true, tension: 0.2, borderWidth: 3 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } },
+                plugins: { legend: { labels: { color: '#fff' } } }
+            }
+        });
+
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        const tempChart = new Chart(ctxTemp, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [
+                    { label: 'SA Temperature', borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', data: Array(20).fill(null), fill: true, tension: 0.2 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } },
+                plugins: { legend: { labels: { color: '#fff' } } }
+            }
+        });
+
+        const ctxPerf = document.getElementById('perfChart').getContext('2d');
+        const perfChart = new Chart(ctxPerf, {
+            type: 'bar',
+            data: {
+                labels: ['CPU', 'GPU'],
+                datasets: [{
+                    label: 'Layouts Evaluated / Second',
+                    data: [0, 0],
+                    backgroundColor: ['#3b82f6', '#10b981'],
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } },
+                plugins: { legend: { labels: { color: '#fff' } } }
+            }
+        });
+
+        let baselinesAdded = false;
 
         function updateLayout(flatStr, score) {
             if(!flatStr || flatStr.length !== 30) return;
@@ -381,23 +466,71 @@ HTML_TEMPLATE = """
                 
                 const isRunning = data.is_running;
                 document.getElementById('status-dot').className = isRunning ? 'status-dot active' : 'status-dot';
-                document.getElementById('status-text').textContent = isRunning ? 'Running' : 'Stopped';
+                document.getElementById('status-text').textContent = isRunning ? 'Running (' + data.current_engine + ')' : 'Stopped';
                 
                 document.getElementById('btn-start').disabled = isRunning;
                 document.getElementById('btn-stop').disabled = !isRunning;
                 
-                if(data.best_layout) updateLayout(data.best_layout.flat, data.best_layout.score);
+                if(data.best_layout) {
+                    updateLayout(data.best_layout.flat, data.best_layout.score);
+                    
+                    // Update Score Chart
+                    scoreChart.data.datasets[0].data.shift();
+                    scoreChart.data.datasets[0].data.push(data.best_layout.score);
+                } else {
+                    scoreChart.data.datasets[0].data.shift();
+                    scoreChart.data.datasets[0].data.push(null);
+                }
+
+                if(data.algo_status) {
+                    tempChart.data.datasets[0].data.shift();
+                    tempChart.data.datasets[0].data.push(data.algo_status.T);
+                } else {
+                    tempChart.data.datasets[0].data.shift();
+                    tempChart.data.datasets[0].data.push(null);
+                }
+
+                // Baselines
+                if(data.baselines && !baselinesAdded) {
+                    baselinesAdded = true;
+                    const colors = { 'qwerty': '#ef4444', 'colemak-dh': '#10b981', 'dvorak': '#f59e0b', 'graphite': '#3b82f6' };
+                    for(const [name, score] of Object.entries(data.baselines)) {
+                        scoreChart.data.datasets.push({
+                            label: name.toUpperCase(),
+                            borderColor: colors[name] || '#ffffff',
+                            data: Array(20).fill(score),
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false,
+                            borderWidth: 1
+                        });
+                    }
+                }
+
+                // Performance Chart
+                if(data.perf_log) {
+                    perfChart.data.datasets[0].data[0] = data.perf_log.cpu_evals_per_sec || 0;
+                    perfChart.data.datasets[0].data[1] = data.perf_log.gpu_evals_per_sec || 0;
+                    perfChart.update();
+                }
                 
                 if(data.logs && data.logs.length > 0) {
                     data.logs.forEach(log => addLog(log, 'success'));
                 }
                 
-                // Update chart
+                // Update Sys Chart
                 sysChart.data.datasets[0].data.shift();
                 sysChart.data.datasets[0].data.push(data.system.cpu);
                 sysChart.data.datasets[1].data.shift();
                 sysChart.data.datasets[1].data.push(data.system.ram);
+                sysChart.data.datasets[2].data.shift();
+                sysChart.data.datasets[2].data.push(data.system.cpu_temp);
+                sysChart.data.datasets[3].data.shift();
+                sysChart.data.datasets[3].data.push(data.system.gpu_temp);
+                
                 sysChart.update();
+                scoreChart.update();
+                tempChart.update();
 
             } catch (e) {
                 console.error("Failed to fetch status");
@@ -405,15 +538,16 @@ HTML_TEMPLATE = """
         }
 
         async function startOptimizer() {
+            const engine = document.getElementById('cfg-engine').value;
             const workers = document.getElementById('cfg-workers').value;
             const steps = document.getElementById('cfg-steps').value;
             const cooling = document.getElementById('cfg-cooling').value;
             
-            addLog(`Starting with ${workers} workers...`, "info");
+            addLog(`Starting NeuroKey with ${engine.toUpperCase()} engine...`, "info");
             await fetch('/api/start', {
                 method: 'POST', 
                 headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({workers, steps, cooling})
+                body: JSON.stringify({engine, workers, steps, cooling})
             });
             fetchStatus();
         }
@@ -432,15 +566,42 @@ HTML_TEMPLATE = """
 """
 
 log_buffer = []
+current_engine = "cpu"
 
-def run_optimizer(workers, steps, cooling):
-    global OPTIMIZER_PROCESS
-    cmd = ['python3', 'main.py', 'optimize', '--resume']
+def get_hw_temp():
+    temps = {'cpu': 0, 'gpu': 0}
+    try:
+        data = psutil.sensors_temperatures()
+        if data:
+            # Check for CPU
+            for name in ['coretemp', 'k10temp', 'cpu_thermal']:
+                if name in data and data[name]:
+                    temps['cpu'] = data[name][0].current
+                    break
+            # Check for GPU
+            for name in ['amdgpu', 'nvidia', 'nouveau']:
+                if name in data and data[name]:
+                    temps['gpu'] = data[name][0].current
+                    break
+            
+            # Fallback if CPU not found explicitly
+            if temps['cpu'] == 0:
+                for k, v in data.items():
+                    if 'gpu' not in k.lower() and v:
+                        temps['cpu'] = v[0].current
+                        break
+    except Exception:
+        pass
+    return temps
+
+def run_optimizer(engine, workers, steps, cooling):
+    global OPTIMIZER_PROCESS, current_engine
+    current_engine = engine
+    cmd = ['python3', 'main.py', 'optimize', '--resume', '--engine', engine]
     if workers: cmd.extend(['--workers', str(workers)])
     if steps: cmd.extend(['--steps', str(steps)])
     if cooling: cmd.extend(['--cooling', cooling])
     
-    # Run optimizer in a new process group so we can kill all children easily
     OPTIMIZER_PROCESS = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -451,7 +612,7 @@ def run_optimizer(workers, steps, cooling):
     )
     for line in OPTIMIZER_PROCESS.stdout:
         line = line.strip()
-        if "★ NEW GLOBAL BEST" in line or "Resumed" in line or "OPTIMIZATION COMPLETE" in line:
+        if "★ NEW GLOBAL BEST" in line or "Resumed" in line or "OPTIMIZATION COMPLETE" in line or "Evals" in line:
             log_buffer.append(line)
             if len(log_buffer) > 50: log_buffer.pop(0)
     
@@ -472,19 +633,47 @@ def status():
             with open(best_path, 'rb') as f: best_data = pickle.load(f)
         except: pass
 
+    algo_status = None
+    status_path = os.path.join('results', 'status.json')
+    if os.path.exists(status_path):
+        try:
+            with open(status_path, 'r') as f: algo_status = json.load(f)
+        except: pass
+
+    baselines = None
+    base_path = os.path.join('results', 'baselines.json')
+    if os.path.exists(base_path):
+        try:
+            with open(base_path, 'r') as f: baselines = json.load(f)
+        except: pass
+        
+    perf_log = None
+    perf_path = os.path.join('results', 'performance_log.json')
+    if os.path.exists(perf_path):
+        try:
+            with open(perf_path, 'r') as f: perf_log = json.load(f)
+        except: pass
+
     logs_to_send = list(log_buffer)
     log_buffer.clear()
     
     is_running = OPTIMIZER_PROCESS is not None and OPTIMIZER_PROCESS.poll() is None
+    hw_temps = get_hw_temp()
     
     sys_stats = {
         'cpu': psutil.cpu_percent(),
-        'ram': psutil.virtual_memory().percent
+        'ram': psutil.virtual_memory().percent,
+        'cpu_temp': hw_temps['cpu'],
+        'gpu_temp': hw_temps['gpu']
     }
     
     return jsonify({
         'is_running': is_running,
+        'current_engine': current_engine,
         'best_layout': best_data,
+        'algo_status': algo_status,
+        'baselines': baselines,
+        'perf_log': perf_log,
         'logs': logs_to_send,
         'system': sys_stats
     })
@@ -494,10 +683,11 @@ def start():
     global OPTIMIZER_PROCESS
     if OPTIMIZER_PROCESS is None or OPTIMIZER_PROCESS.poll() is not None:
         data = request.json or {}
+        e = data.get('engine', 'cpu')
         w = data.get('workers')
         s = data.get('steps')
         c = data.get('cooling')
-        t = threading.Thread(target=run_optimizer, args=(w, s, c))
+        t = threading.Thread(target=run_optimizer, args=(e, w, s, c))
         t.daemon = True
         t.start()
         return jsonify({'status': 'started'})
@@ -507,7 +697,6 @@ def start():
 def stop():
     global OPTIMIZER_PROCESS
     if OPTIMIZER_PROCESS is not None:
-        # Kill the entire process group
         try:
             os.killpg(os.getpgid(OPTIMIZER_PROCESS.pid), signal.SIGTERM)
         except Exception as e:
@@ -516,6 +705,13 @@ def stop():
         return jsonify({'status': 'stopped'})
     return jsonify({'status': 'not running'})
 
+def handle_sigterm(*args):
+    cleanup_process()
+    os._exit(0)
+
+signal.signal(signal.SIGINT, handle_sigterm)
+signal.signal(signal.SIGTERM, handle_sigterm)
+
 if __name__ == '__main__':
-    print("Starting OptiKey GUI Server on http://localhost:5000")
+    print("Starting NeuroKey GUI Server on http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=False)

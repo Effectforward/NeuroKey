@@ -22,25 +22,41 @@ import sys
 import os
 import pickle
 
-from config import PATHS
-from corpus import build_ngrams
-from scorer import Scorer
-from optimizer import optimize, layout_to_string, layout_to_flat
-from analyze import (get_layout, print_layout, print_full_analysis,
+from src.config import PATHS
+from src.corpus import build_ngrams
+from src.scorer import Scorer
+from src.optimizer import optimize, layout_to_string, layout_to_flat
+from src.analyze import (get_layout, print_layout, print_full_analysis,
                      compare_layouts, KNOWN_LAYOUTS)
 
 
-def cmd_optimize(resume: bool = False, workers: int = None, steps: int = None, cooling: str = None):
+def cmd_optimize(resume: bool = False, workers: int = None, steps: int = None, cooling: str = None, engine: str = 'cpu'):
     uni, bi, tri = build_ngrams()
     scorer = Scorer(uni, bi, tri)
     
     print("\nBaseline scores (for reference):")
-    from analyze import compare_layouts
-    baselines = {name: get_layout(name) for name in ['qwerty', 'colemak-dh', 'graphite']}
+    from src.analyze import compare_layouts, get_layout
+    baselines = {name: get_layout(name) for name in ['qwerty', 'colemak-dh', 'dvorak', 'graphite']}
+    import json, os
+    os.makedirs('results', exist_ok=True)
+    baseline_scores = {}
+    for name, layout in baselines.items():
+        baseline_scores[name] = scorer.full_score(layout)
+    with open('results/baselines.json', 'w') as f:
+        json.dump(baseline_scores, f)
+        
     compare_layouts(baselines, scorer)
     
     print("\nStarting optimizer...\n")
-    best_score, best_layout = optimize(scorer, resume=resume, workers=workers, steps=steps, cooling_str=cooling)
+    if engine == 'gpu':
+        try:
+            from src.pytorch_optimizer import optimize_pytorch
+            best_score, best_layout = optimize_pytorch(scorer, resume=resume, workers=workers, steps=steps, cooling_str=cooling)
+        except ImportError:
+            print("PyTorch not installed. Run: pip install torch")
+            return
+    else:
+        best_score, best_layout = optimize(scorer, resume=resume, workers=workers, steps=steps, cooling_str=cooling)
     
     if best_layout:
         print(f"\n{'═'*60}")
@@ -68,7 +84,7 @@ def cmd_compare():
     if os.path.exists(best_path):
         with open(best_path, 'rb') as f:
             data = pickle.load(f)
-        from optimizer import flat_to_layout
+        from src.optimizer import flat_to_layout
         layouts['★ optimized'] = flat_to_layout(data['flat'])
     
     compare_layouts(layouts, scorer)
@@ -86,10 +102,31 @@ def cmd_show_best():
     uni, bi, tri = build_ngrams()
     scorer = Scorer(uni, bi, tri)
     
-    from optimizer import flat_to_layout
+    from src.optimizer import flat_to_layout
     layout = flat_to_layout(data['flat'])
     print_full_analysis(layout, scorer, title=f"BEST FOUND (score={data['score']:.6f})")
     print(f"\nFound at: {data.get('timestamp', 'unknown')}")
+
+
+def cmd_export_ngrams():
+    """Export n-grams as JSON for the Rust/Tauri frontend."""
+    import json
+    uni, bi, tri = build_ngrams()
+    
+    # tri is (i,j,k) -> freq, convert to "i,j,k" string for JSON
+    tri_json = {f"{k[0]},{k[1]},{k[2]}": v for k, v in tri.items()}
+    
+    data = {
+        'unigrams': uni,
+        'bigrams': bi,
+        'trigrams': tri_json
+    }
+    
+    output_path = os.path.join(PATHS['results'], 'ngrams.json')
+    os.makedirs(PATHS['results'], exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(data, f)
+    print(f"Exported n-grams to {output_path}")
 
 
 def cmd_rebuild_corpus():
@@ -113,7 +150,7 @@ def cmd_test():
     
     scorer = Scorer(fake_uni, fake_bi, fake_tri)
     
-    from optimizer import qwerty_layout, random_layout
+    from src.optimizer import qwerty_layout, random_layout
     q_layout = qwerty_layout()
     r_layout = random_layout()
     
@@ -123,7 +160,7 @@ def cmd_test():
     print(f"Random score:  {r_score:.6f}")
     
     # Test delta scoring
-    from optimizer import flat_to_layout
+    from src.optimizer import flat_to_layout
     layout = qwerty_layout()
     full_before = scorer.full_score(layout)
     delta = scorer.delta_score(layout, 0, 1)
@@ -151,6 +188,7 @@ def main():
         workers = None
         steps = None
         cooling = None
+        engine = 'cpu'
         
         for i, arg in enumerate(args):
             if arg == '--workers' and i+1 < len(args):
@@ -159,8 +197,10 @@ def main():
                 steps = int(args[i+1])
             elif arg == '--cooling' and i+1 < len(args):
                 cooling = args[i+1]
+            elif arg == '--engine' and i+1 < len(args):
+                engine = args[i+1].lower()
                 
-        cmd_optimize(resume=resume, workers=workers, steps=steps, cooling=cooling)
+        cmd_optimize(resume=resume, workers=workers, steps=steps, cooling=cooling, engine=engine)
     
     elif cmd == 'analyze':
         if len(args) < 2:
@@ -177,6 +217,9 @@ def main():
     
     elif cmd == 'rebuild-corpus':
         cmd_rebuild_corpus()
+    
+    elif cmd == 'export-ngrams':
+        cmd_export_ngrams()
     
     elif cmd == 'test':
         cmd_test()

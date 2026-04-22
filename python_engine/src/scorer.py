@@ -19,7 +19,7 @@ Layout representation:
 
 import math
 from typing import Dict, List, Tuple
-from config import (
+from src.config import (
     CHARS, NUM_KEYS, EFFORT, FINGER, HAND, COL,
     FINGER_STRENGTH, FINGER_USAGE_LIMIT, WEIGHTS
 )

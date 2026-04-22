@@ -1,0 +1,56 @@
+name: NeuroKey CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install Frontend Dependencies
+      run: npm install
+
+    - name: Frontend Build & Lint
+      run: npm run build
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: "./src-tauri -> target"
+
+    - name: Install Tauri Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+    - name: Rust Check
+      run: cargo check --manifest-path src-tauri/Cargo.toml
+
+    - name: Rust Tests
+      run: cargo test --manifest-path src-tauri/Cargo.toml
+
+    - name: Maintain Error Logs
+      if: failure()
+      run: |
+        echo "### Build Errors Detected" > error_log.txt
+        echo "Timestamp: $(date)" >> error_log.txt
+        echo "------------------------" >> error_log.txt
+        # This is a simplified way to capture logs for the user
+        echo "Check the GitHub Actions step logs for full details." >> error_log.txt

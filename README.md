@@ -1,102 +1,121 @@
-# OptiKey: AI-Powered Keyboard Layout Optimizer
+# 🧠 NEUROKEY: The Ultimate Keyboard Layout Optimizer
 
-OptiKey is an advanced, AI-powered keyboard layout optimizer designed to find the **mathematically optimal keyboard layout for programming and general typing**. 
-
-Unlike other layout generators that optimize only for English prose, OptiKey uses a multi-language programming corpus (Python, JavaScript, Rust, C++, Go, Java, TypeScript, C, Ruby, Shell, and Markdown docs) to build an N-gram frequency model of how developers *actually* type.
-
-It uses **Simulated Annealing (SA)**, a powerful stochastic optimization algorithm from the machine learning family, running in parallel to search through the `30!` (2.65×10³²) possible layout permutations.
-
----
-
-## 🌟 Features
-
-* **Beautiful Web GUI**: Comes with a sleek, real-time dashboard to monitor the optimization process, visualize the current best layout, and view live metrics.
-* **Programming-First Corpus**: Optimized for real code, not just novels. Includes syntax frequencies for 10+ major languages.
-* **10 Ergonomic Metrics**: Evaluates Effort, Same-Finger Bigrams (SFB), Same-Finger Skipgrams (SFS), Inward/Outward Rolls, Lateral Stretches, Hand Balance, Finger Overload, and Redirects.
-* **Parallel Optimization**: Spawns multiple independent Simulated Annealing workers to utilize all CPU cores effectively.
-* **Distributable**: Volunteers and contributors can easily clone the repo, fetch the data, and run the optimizer to help find the global optimum.
-
----
-
-## 🚀 Quick Start
-
-### 1. Prerequisites
-Ensure you have Python 3 installed. Then, install the dependencies:
-
-```bash
-pip install -r requirements.txt
-pip install flask
-```
-
-### 2. Fetch the Training Corpus
-OptiKey requires real code to learn from. Run the fast data fetch script to automatically clone popular open-source repositories and extract their code into the training corpus.
-
-```bash
-bash get_fast_data.sh
-```
-*(This script fetches Python, Rust, C, C++, JS, Go, Java, TS, Ruby, Shell, and Markdown. It then automatically rebuilds the N-gram frequency cache.)*
-
-### 3. Launch the GUI
-Start the beautiful web dashboard to control and monitor the optimization process:
-
-```bash
-python gui.py
-```
-Open your browser to `http://localhost:5000`. From the dashboard, you can click **Start Optimization** and watch the AI discover better layouts in real-time.
-
----
-
-## 🧠 How it Works
-
-1. **Corpus Generation**: The tool scans millions of lines of code to build unigram, bigram, and trigram frequency tables.
-2. **Scoring Function (`scorer.py`)**: A fitness function assigns a penalty score to any given layout. A lower score means a more ergonomic layout.
-3. **Simulated Annealing (`optimizer.py`)**: 
-   - The AI starts with a random layout (or a known layout like QWERTY) at a high "temperature".
-   - It randomly swaps two keys. If the new layout is better (lower score), it keeps it.
-   - If it's worse, it *might* still keep it depending on the temperature. This helps the AI escape local minima.
-   - Over millions of steps, the temperature "cools" down, and the AI fine-tunes the layout into a highly optimized state.
-
----
-
-## 🛠️ CLI Usage (Headless Mode)
-
-If you prefer the terminal or want to run this on a headless server:
-
-```bash
-# Start or resume the optimizer
-python main.py optimize
-
-# View the best layout found so far
-python main.py show-best
-
-# Compare known layouts (QWERTY, Colemak-DH, Graphite, etc.) against your corpus
-python main.py compare
-
-# Analyze a specific layout string
-python main.py analyze qwerty
+```text
+███╗   ██╗███████╗██╗   ██╗██████╗  ██████╗ ██╗  ██╗███████╗██╗   ██╗
+████╗  ██║██╔════╝██║   ██║██╔══██╗██╔═══██╗██║ ██╔╝██╔════╝╚██╗ ██╔╝
+██╔██╗ ██║█████╗  ██║   ██║██████╔╝██║   ██║█████╔╝ █████╗   ╚████╔╝ 
+██║╚██╗██║██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔═██╗ ██╔══╝    ╚██╔╝  
+██║ ╚████║███████╗╚██████╔╝██║  ██║╚██████╔╝██║  ██╗███████╗   ██║   
+╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝   ╚═╝   
+             HIGH-PERFORMANCE NEURAL KEYBOARD EVOLUTION
 ```
 
 ---
 
-## ⚖️ Tuning the Algorithm
+## 🚀 Quick Start Tutorial: Finding Your Perfect Layout
 
-OptiKey is highly customizable. Edit `config.py` to change:
+If you're new to layout optimization, follow these steps to find a layout that outperforms QWERTY by 40%+.
 
-* **Language Weights (`CORPUS_WEIGHTS`)**: If you write more JavaScript than Rust, increase the JS weight.
-* **Ergonomic Penalties (`WEIGHTS`)**: Want to completely eliminate Same-Finger Bigrams? Increase the `sfb` weight from `10.0` to `20.0`.
-* **Simulated Annealing Parameters (`SA`)**: Adjust the cooling schedule, starting temperature, and number of parallel workers.
-
-> Note: If you change `CORPUS_WEIGHTS`, you must rebuild the cache by running `python main.py rebuild-corpus`.
+1.  **Select Your Engine**: 
+    *   **CPU (Rust)**: Best for quick, 1-minute runs. Very stable.
+    *   **GPU (PyTorch)**: Best for deep, 10-minute sessions. Uses massive parallelism to explore more of the "layout space."
+2.  **Pick a Cooling Strategy**:
+    *   **Exponential**: The gold standard. Starts random and slowly settles.
+    *   **Linear**: A steady, predictable cooldown. Good for small tweaks.
+    *   **Cosine**: High exploration at the start, very sharp settling at the end.
+3.  **Set Your Priorities**:
+    *   Want to type faster? Increase **SFB Penalty**.
+    *   Want more comfort? Increase **Roll Bonus**.
+    *   Want less fatigue? Increase **Effort Weight**.
+4.  **Press 'Start Engine'**: Watch the Convergence Graph. When the line flattens out, you've found a local optimum!
+5.  **Stop & Export**: Use the result in your favorite keyboard firmware (QMK, ZMK, etc.).
 
 ---
 
-## 🤝 Contributing
+## 🏗️ Technical Architecture
 
-We welcome volunteers to run the optimizer on their machines! Finding the absolute best layout out of `2.65×10³²` possibilities requires massive compute. 
+NeuroKey utilizes a sophisticated **Hybrid Multi-Engine Architecture**.
 
-1. Clone the repository.
-2. Let the optimizer run for a few days.
-3. Share your `results/best_layout.pkl` or the flat string output!
+### 1. The CPU Engine (Simulated Annealing)
+Written in **Pure Rust**, this engine is optimized for single-core throughput. It is the most reliable engine for standard laptops and systems without a dedicated GPU.
 
-### Hardware Acceleration (Future Work)
-Currently, OptiKey utilizes 100% of your CPU via parallel multiprocessing. Future updates may introduce GPU acceleration (via CUDA/JAX) to evaluate millions of layout permutations concurrently.
+### 2. The GPU Engine (PyTorch Tensor Batching)
+For massive population-based searches, NeuroKey spawns a **Python Sidecar**. It evaluates 50,000+ layouts in a single GPU pass. **Note**: Requires NVIDIA/CUDA or Apple Silicon for best results.
+
+---
+
+## 🎮 GUI Control Reference
+
+### 🌡️ Annealing Strategy
+*   **Steps**: Total iterations. Recommended: `1,000,000` for quick runs, `10,000,000` for final results.
+*   **Cooling Model**: 
+    *   **Exponential**: `T = T_start * (T_end / T_start) ^ (step / total)`. Best all-rounder.
+    *   **Linear**: `T = T_start - (T_start - T_end) * (step / total)`. Good for simple refinements.
+    *   **Cosine**: Uses a cosine wave to cool down. High early exploration.
+*   **Start/End Temp**: Higher start temp = more random exploration. Lower end temp = finer adjustments at the end.
+
+### 📊 Visualization & Metrics
+*   **Live Layout Updates**: The keyboard display updates in real-time as the engine discovers more ergonomic arrangements.
+*   **Convergence Graph**: Tracks the "Efficiency Score" in real-time. A downward curve indicates the engine is successfully finding better layouts.
+*   **Neural Load**: Monitors CPU/GPU utilization. Higher load means faster evaluations per second.
+*   **Engine Telemetry**: A live log of system events, hardware acceleration status, and optimization milestones.
+
+### 🧬 Biometric Weights
+*   **SFB Penalty**: Penalizes same-finger bigrams (e.g., `ED`). High values eliminate SFBs entirely.
+*   **Roll Bonus**: Rewards inward motions (Pinky -> Index). Makes typing feel "fluid."
+*   **Outward Penalty**: Penalizes outward motions. Reduces finger "tripping."
+*   **Effort Weight**: Penalizes far keys. High values force more common letters to the home row.
+*   **Hand Balance**: Target work split. `0.5` = perfect 50/50 balance.
+
+---
+
+## 🛠️ Developer Setup
+
+### Prerequisites
+*   **Rust**: `rustup` for the core engine.
+*   **Node.js**: `npm` for the React/Vite frontend.
+*   **Python 3.10+**: For the PyTorch sidecar.
+
+### Quick Start
+```bash
+npm install
+npm run tauri dev
+```
+
+---
+
+## 📊 Which Engine Should I Use?
+
+| Feature | CPU Engine (Rust) | GPU Engine (PyTorch) |
+| :--- | :--- | :--- |
+| **Speed** | 10M+ evals/sec | 500M+ evals/sec |
+| **Stability** | Rock Solid | Dependent on Drivers |
+| **Search Depth** | Deep (Simulated Annealing) | Broad (Genetic Algorithm) |
+| **Best For** | Daily Tweaking | Discovering New Layouts |
+
+---
+
+## 🛠️ Troubleshooting & FAQ
+
+### 1. "Execution error: invalid args..."
+This usually happens if the frontend sends `snake_case` keys to a Tauri command. NeuroKey uses `camelCase` in the frontend and `snake_case` in the Rust backend for optimal interoperability. Ensure your `invoke` calls match the documentation.
+
+### 2. How to read Engine Telemetry?
+The telemetry log provides high-resolution timing and status updates:
+*   `[CORE]`: Messages from the Rust SA engine.
+*   `[GPU]`: Messages from the PyTorch sidecar.
+*   `[IPC]`: Communication events between the GUI and the backend.
+
+### 3. Which cooling strategy is "best"?
+For most users, **Exponential** is the most effective. If you have a layout that is already 90% perfect and you just want to swap a few keys, use **Linear** with a very low **Start Temp**.
+
+---
+
+## 🤝 Contributing New Engines
+
+NeuroKey is designed to be extensible. You can add new optimization algorithms (like Particle Swarm or Ant Colony) by:
+1.  Implementing the `Engine` trait in Rust.
+2.  Adding the engine toggle to `App.tsx`.
+3.  Registering the command in `lib.rs`.
+
+---

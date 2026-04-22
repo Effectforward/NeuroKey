@@ -36,7 +36,7 @@ import multiprocessing as mp
 from datetime import datetime
 from typing import List, Tuple, Optional
 
-from config import CHARS, NUM_KEYS, SA, PATHS
+from src.config import CHARS, NUM_KEYS, SA, PATHS
 
 N_CHARS = len(CHARS)
 
@@ -223,14 +223,14 @@ def _sa_worker(worker_id: int, scorer_data: bytes, seed: int,
                 pkl.dump(ckpt, f)
             
             # Send best to main process
-            result_queue.put((worker_id, best_score, list(best_layout), step))
+            result_queue.put((worker_id, best_score, list(best_layout), step, T, steps_per_sec))
             
             accepts = rejects = improvements = 0  # reset counters
     
     # Final result
     # Recompute full score for accuracy (delta accumulation has floating point drift)
     final_score = scorer.full_score(best_layout)
-    result_queue.put((worker_id, final_score, best_layout, max_steps))
+    result_queue.put((worker_id, final_score, best_layout, max_steps, T_end, 0.0))
     print(f"[Worker {worker_id}] DONE. Final best score: {final_score:.6f}")
     print(f"[Worker {worker_id}] Best layout:\n{layout_to_string(best_layout)}")
 
@@ -308,7 +308,20 @@ def optimize(scorer, resume: bool = False, workers: int = None, steps: int = Non
     try:
         while finished < n_workers and not stop_event.is_set():
             try:
-                wid, score, layout, step = result_queue.get(timeout=5.0)
+                wid, score, layout, step, T, steps_per_sec = result_queue.get(timeout=5.0)
+                
+                # Write current status (temp, step)
+                status_path = os.path.join(results_dir, 'status.json')
+                import json
+                with open(status_path, 'w') as f:
+                    json.dump({'T': T, 'step': step, 'max_steps': max_steps}, f)
+                    
+                # Log performance
+                from src.logger import log_performance
+                # Total evals per sec = steps_per_sec * n_workers (rough estimate)
+                if steps_per_sec > 0:
+                    log_performance('cpu', steps_per_sec * n_workers, global_best_score)
+                    
                 if score < global_best_score:
                     global_best_score = score
                     global_best_layout = list(layout)

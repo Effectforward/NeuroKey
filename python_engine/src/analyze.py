@@ -9,8 +9,8 @@ Usage:
 """
 
 from typing import List, Dict
-from config import CHARS, NUM_KEYS, EFFORT, FINGER, HAND, COL
-from optimizer import (layout_to_string, layout_to_flat, flat_to_layout,
+from src.config import CHARS, NUM_KEYS, EFFORT, FINGER, HAND, COL
+from src.optimizer import (layout_to_string, layout_to_flat, flat_to_layout,
                        qwerty_layout, colemak_dh_layout, random_layout)
 
 N_CHARS = len(CHARS)
@@ -18,8 +18,8 @@ N_CHARS = len(CHARS)
 KNOWN_LAYOUTS = {
     'qwerty':     "qwertyuiopasdfghjkl;zxcvbnm,.'",
     'dvorak':     "',.pyfgcrlaoeuidhtns;qjkxbmwvz",
-    'colemak':    "qwfpgjluy;arstdneio'zxcvbkm,./",
-    'colemak-dh': "qwfpbjluy;arstgmneio'zxcdvkh,./",
+    'colemak':    "qwfpgjluy;arstdhneiozxcvbkm,.'",
+    'colemak-dh': "qwfpbjluy;arstgmneiozxcdvkh,.'",
     'workman':    "qdrwbjfup;ashtgyneoizxmcvkl,.'",
     'graphite':   "bldwzjfou,nrtsgyhaei;qxmcvkp.'",
 }

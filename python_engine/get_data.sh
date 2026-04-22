@@ -78,6 +78,5 @@ echo "  Download complete! Rebuilding n-gram cache..."
 echo "============================================================"
 python3 main.py rebuild-corpus
 
-echo ""
-echo "Corpus is ready! You can now start the GUI:"
-echo "  python3 gui.py"
+echo "Corpus is ready! You can now start the NeuroKey Dashboard:"
+echo "  npm run tauri dev"

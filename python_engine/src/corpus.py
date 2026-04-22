@@ -20,7 +20,7 @@ import collections
 from pathlib import Path
 from typing import Dict, Tuple
 
-from config import CHARS, CORPUS_WEIGHTS, PATHS
+from src.config import CHARS, CORPUS_WEIGHTS, PATHS
 
 CHAR_SET = set(CHARS)
 
