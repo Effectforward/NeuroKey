@@ -27,7 +27,8 @@ jobs:
           pkgconf-pkg-config \
           openssl-devel \
           webkit2gtk4.1-devel \
-          libayatana-appindicator-devel \
+          libappindicator-gtk3-devel \
+          librsvg2-devel \
           libsoup3-devel \
           gtk3-devel \
           pango-devel \
