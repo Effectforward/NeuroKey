@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { 
@@ -23,6 +23,12 @@ const HELP_TEXT: Record<string, string> = {
   effort: "Penalizes keys far from the home row. High values force common letters to the center.",
   balance: "Target work distribution between left/right hands. 0.5 is perfect symmetry."
 };
+
+interface BestLayoutPayload {
+  layout: string;
+  score: number;
+  progress: number;
+}
 
 function App() {
   const [layout, setLayout] = useState(PRESETS.QWERTY);
@@ -54,7 +60,7 @@ function App() {
   ]);
 
   useEffect(() => {
-    const unlisten = listen("best_layout_found", (event: any) => {
+    const unlisten = listen<BestLayoutPayload>("best_layout_found", (event) => {
       if (liveUpdates) {
         setLayout(event.payload.layout);
         setScore(event.payload.score);
