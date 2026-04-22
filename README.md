@@ -3,42 +3,48 @@
 
 ![NeuroKey Banner](https://img.shields.io/badge/Engine-Rust%20%7C%20PyTorch-blueviolet?style=for-the-badge)
 ![UI-Tauri](https://img.shields.io/badge/UI-Tauri%20%7C%20React-blue?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-NeuroKey is a high-performance, cross-platform desktop application designed to evolve the "perfect" keyboard layout using **Simulated Annealing** and **Neural Population Dynamics**.
+NeuroKey is a high-performance desktop application designed to evolve the "perfect" keyboard layout using Simulated Annealing and Neural Population Dynamics.
 
 ---
 
 ## 🛠️ Prerequisites & Installation
 
-Before running NeuroKey, you need to install the core development toolchains and system dependencies.
+To build and run NeuroKey, you must install the following development toolchains and system-level libraries for your specific Linux distribution.
 
-### 1. Core Toolchains
-*   **Rust**: Install via [rustup.rs](https://rustup.rs/)
-    ```bash
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    ```
-*   **Node.js**: Install v18 or later (Recommended via [nvm](https://github.com/nvm-sh/nvm))
-    ```bash
-    nvm install 20
-    ```
-*   **Python 3.10+**: Required for the GPU-accelerated sidecar.
+### 1. Development Toolchains (All Platforms)
+*   **Rust**: [rustup.rs](https://rustup.rs/) (Stable 1.75+)
+*   **Node.js**: v18 or later ([nvm](https://github.com/nvm-sh/nvm) recommended)
+*   **Python**: 3.10+ (For GPU acceleration)
 
-### 2. System Dependencies (OS Specific)
+### 2. System Dependencies (Distro-Specific)
 
-#### **Fedora (Recommended)**
+You must install these libraries to support the Tauri GUI and the Rust compilation process.
+
+#### **🟦 Fedora / RHEL**
 ```bash
-sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel openssl-devel gcc-c++ make
+sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel openssl-devel gcc-c++ make pkgconf-pkg-config
 ```
 
-#### **Ubuntu / Debian**
+#### **🟧 Ubuntu / Debian / Mint**
 ```bash
-sudo apt-get update
-sudo apt-get install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev build-essential curl wget libssl-dev
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev build-essential curl wget libssl-dev libgtk-3-dev
 ```
 
-### 3. Python Environment (Sidecar)
-The neural engine dependencies are located in the `python_engine` directory.
+#### **⬜ Arch Linux / Manjaro**
+```bash
+sudo pacman -Syu --needed base-devel webkit2gtk-4.1 libappindicator-gtk3 librsvg openssl
+```
+
+#### **🟩 openSUSE**
+```bash
+sudo zypper install -t pattern devel_basis
+sudo zypper install webkit2gtk3-devel libappindicator3-devel librsvg-devel libopenssl-devel
+```
+
+### 3. Neural Engine Setup
+The GPU-accelerated sidecar requires specific Python packages. Navigate to the project root and run:
 ```bash
 pip install -r python_engine/requirements.txt
 ```
@@ -47,18 +53,20 @@ pip install -r python_engine/requirements.txt
 
 ## 🎮 Getting Started
 
-1.  **Clone & Install Frontend**:
+1.  **Clone the Repository**:
     ```bash
     git clone https://github.com/Effectforward/NeuroKey.git
     cd NeuroKey
+    ```
+2.  **Install Frontend**:
+    ```bash
     npm install
     ```
-2.  **Fetch Training Data**:
-    To train the engine on real-world code and prose:
+3.  **Fetch Training Data**:
     ```bash
     bash python_engine/get_data.sh
     ```
-3.  **Launch the Dashboard**:
+4.  **Run Development Mode**:
     ```bash
     npm run tauri dev
     ```
@@ -67,34 +75,19 @@ pip install -r python_engine/requirements.txt
 
 ## ✨ Key Features
 
-*   **🚀 Dual-Engine Optimization**:
-    *   **Rust (CPU)**: Ultra-stable, single-threaded simulated annealing for precision refinement.
-    *   **PyTorch (GPU)**: Genetic algorithms for broad-spectrum layout exploration (requires Python sidecar).
-*   **🌡️ Real-Time Convergence**: Watch your layout evolve live with glassmorphic UI telemetry.
-*   **🧬 Biometric Weighting**: Tune SFB penalties, inward roll bonuses, and effort weights to your anatomy.
-*   **📊 Convergence Tracking**: High-resolution graphs showing the mathematical descent towards ergonomics.
+*   **🚀 Dual-Engine Optimization**: Switch between Rust (CPU) for precision and PyTorch (GPU) for broad exploration.
+*   **🌡️ Real-Time Convergence**: Live telemetry and convergence graphs.
+*   **🧬 Biometric Weighting**: Tune SFB penalties, rolls, and hand balance.
+*   **📥 Presets**: Compare against QWERTY, Dvorak, and Colemak out of the box.
 
 ---
 
-## 🏗️ Developer Notes
+## 🏗️ Project Architecture
 
-### CI/CD Workflow
-NeuroKey uses a **Fedora-based GitHub Actions** workflow to ensure build stability. If you are contributing, your PRs will be automatically tested against the latest Fedora environment.
-
-### Project Structure
-*   `/src-tauri`: Core Rust logic, IPC commands, and the Annealing engine.
-*   `/ui`: React frontend built with Vite and Lucide.
-*   `/python_engine`: PyTorch sidecar, data retrieval scripts, and n-gram caches.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [development.md](development.md) for architecture details.
-
-1.  Fork the repo and create your feature branch.
-2.  Ensure your code passes `cargo check` and `npm run build`.
-3.  Open a Pull Request.
+*   **`src-tauri/`**: High-performance Rust backend & IPC bridge.
+*   **`ui/`**: React-based dashboard with Recharts visualization.
+*   **`python_engine/`**: Neural sidecar logic and `requirements.txt`.
+*   **`.github/workflows/`**: Fedora-based CI/CD pipeline.
 
 ---
 
