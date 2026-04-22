@@ -1,36 +1,51 @@
-# Python
+# Python dependencies and caches
 __pycache__/
 *.pyc
-data/corpus/
-data/ngrams_cache.pkl
-checkpoints/
-results/
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+.ipynb_checkpoints/
 
-# Node
-node_modules/
-dist/
-dist-ssr/
-*.local
-
-# Rust
-target/
-src-tauri/target/
-
-# Tauri
-src-tauri/gen/
-src-tauri/bin/
-
-# Data
-/data/
+# Neural Engine Data (Large artifacts)
 /python_engine/data/
-*.csv
-*.json
-!package.json
-!tsconfig.json
+/python_engine/checkpoints/
+/python_engine/results/
+/data/
+*.pkl
+*.pth
+*.h5
+
+# Node / Frontend
+node_modules/
+/dist/
+/dist-ssr/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Rust / Tauri
+target/
+/src-tauri/target/
+/src-tauri/gen/
+/src-tauri/bin/
+*.rs.bk
+
+# Configuration (DO NOT IGNORE essential JSONs)
+# *.json # Removed this dangerous broad ignore
+.vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
-.DS_Store
+*.DS_Store
 Thumbs.db
+
+# Environment / Logs
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+error_log.txt
