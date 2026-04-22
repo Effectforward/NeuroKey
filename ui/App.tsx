@@ -5,7 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { 
-  Zap, Settings, Activity, Terminal, Cpu, Play, BarChart3, Sliders, Info, ShieldAlert, Square, RefreshCw, HelpCircle, X
+  Zap, Settings, Activity, Terminal, Cpu, Play, BarChart3, Sliders, ShieldAlert, Square, RefreshCw, HelpCircle, X
 } from 'lucide-react';
 import "./App.css";
 
@@ -20,6 +20,7 @@ const HELP_TEXT: Record<string, string> = {
   temp: "Controls 'randomness'. High temp explores many layouts; low temp refines the current best.",
   sfb: "Same-Finger Bigram. Penalizes using the same finger for two consecutive letters (e.g. ED).",
   rolls: "Bonus for comfortable inward motions (Pinky -> Index). Makes typing feel fluid.",
+  outward: "Penalizes awkward outward motions (Index -> Pinky). Reduces finger strain.",
   effort: "Penalizes keys far from the home row. High values force common letters to the center.",
   balance: "Target work distribution between left/right hands. 0.5 is perfect symmetry."
 };
@@ -133,7 +134,7 @@ function App() {
               </div>
               <X size={20} className="clickable" onClick={() => setShowHelp(null)} />
             </div>
-            <p style={{ color: 'var(--text-dim)', lineHeight: '1.6' }}>{HELP_TEXT[showHelp]}</p>
+            <p style={{ color: 'var(--text-dim)', lineHeight: '1.6' }}>{HELP_TEXT[showHelp] || "Explanation coming soon..."}</p>
             <button className="btn btn-primary" onClick={() => setShowHelp(null)} style={{ marginTop: '1.5rem', width: '100%' }}>Got it</button>
           </div>
         </div>
@@ -217,7 +218,11 @@ function App() {
                 Start Engine
               </button>
             ) : (
-              <button className="btn btn-primary clickable" onClick={() => {}} style={{ background: '#ff4444', border: 'none', zIndex: 20 }}>
+              <button 
+                className="btn btn-primary clickable" 
+                onClick={() => addLog("Please wait for the current run to finish or restart the app to abort.", "highlight")} 
+                style={{ background: '#ff4444', border: 'none', zIndex: 20 }}
+              >
                 <Square size={20} fill="currentColor" />
                 Running...
               </button>
@@ -335,6 +340,17 @@ function App() {
               <span className="config-value secondary">{rollBonus.toFixed(1)}</span>
             </div>
             <input type="range" min="0" max="10" step="0.5" value={rollBonus} onChange={(e) => setRollBonus(Number(e.target.value))} className="clickable secondary-slider" />
+          </div>
+
+          <div className="config-item">
+            <div className="config-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ fontSize: '0.8rem' }}>Outward Penalty</span>
+                <HelpCircle size={12} className="clickable" color="var(--text-dim)" onClick={() => setShowHelp('outward')} />
+              </div>
+              <span className="config-value secondary">{outwardPenalty.toFixed(1)}</span>
+            </div>
+            <input type="range" min="0" max="5" step="0.1" value={outwardPenalty} onChange={(e) => setOutwardPenalty(Number(e.target.value))} className="clickable secondary-slider" />
           </div>
 
           <div className="config-item">
