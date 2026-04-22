@@ -3,91 +3,70 @@
 
 ![NeuroKey Banner](https://img.shields.io/badge/Engine-Rust%20%7C%20PyTorch-blueviolet?style=for-the-badge)
 ![UI-Tauri](https://img.shields.io/badge/UI-Tauri%20%7C%20React-blue?style=for-the-badge)
+![Build](https://img.shields.io/badge/CI-Fedora%20Actions-brightgreen?style=for-the-badge)
 
-NeuroKey is a high-performance desktop application designed to evolve the "perfect" keyboard layout using Simulated Annealing and Neural Population Dynamics.
-
----
-
-## 🛠️ Prerequisites & Installation
-
-To build and run NeuroKey, you must install the following development toolchains and system-level libraries for your specific Linux distribution.
-
-### 1. Development Toolchains (All Platforms)
-*   **Rust**: [rustup.rs](https://rustup.rs/) (Stable 1.75+)
-*   **Node.js**: v18 or later ([nvm](https://github.com/nvm-sh/nvm) recommended)
-*   **Python**: 3.10+ (For GPU acceleration)
-
-### 2. System Dependencies (Distro-Specific)
-
-You must install these libraries to support the Tauri GUI and the Rust compilation process.
-
-#### **🟦 Fedora / RHEL**
-```bash
-sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel openssl-devel gcc-c++ make pkgconf-pkg-config
-```
-
-#### **🟧 Ubuntu / Debian / Mint**
-```bash
-sudo apt update
-sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev build-essential curl wget libssl-dev libgtk-3-dev
-```
-
-#### **⬜ Arch Linux / Manjaro**
-```bash
-sudo pacman -Syu --needed base-devel webkit2gtk-4.1 libappindicator-gtk3 librsvg openssl
-```
-
-#### **🟩 openSUSE**
-```bash
-sudo zypper install -t pattern devel_basis
-sudo zypper install webkit2gtk3-devel libappindicator3-devel librsvg-devel libopenssl-devel
-```
-
-### 3. Neural Engine Setup
-The GPU-accelerated sidecar requires specific Python packages. Navigate to the project root and run:
-```bash
-pip install -r python_engine/requirements.txt
-```
+NeuroKey is a high-performance desktop application designed to evolve the "perfect" keyboard layout using **Simulated Annealing** and **Neural Population Dynamics**. By simulating millions of interactions per second, NeuroKey identifies configurations that minimize finger travel and maximize typing comfort.
 
 ---
 
-## 🎮 Getting Started
+## ✨ Features at a Glance
 
-1.  **Clone the Repository**:
+*   **🚀 Real-Time Convergence**: Watch your layout evolve live with high-fidelity telemetry.
+*   **🌡️ Advanced Cooling**: Choose between Exponential, Linear, and Cosine annealing models.
+*   **🧬 Biometric Tuning**: Customize penalties for Same-Finger Bigrams (SFBs), outward rolls, and hand usage.
+*   **🐧 Native Performance**: Built with **Rust** and **Tauri** for a lightweight, native experience on Fedora and beyond.
+*   **📚 Deep Documentation**: Comprehensive guides for installation, development, and mathematical theory.
+
+---
+
+## 🚀 Quick Start
+
+1.  **Install Dependencies**:
+    See our [Detailed Installation Guide](INSTALLATION.md) for Fedora, Ubuntu, Arch, and more.
+2.  **Clone & Setup**:
     ```bash
     git clone https://github.com/Effectforward/NeuroKey.git
     cd NeuroKey
-    ```
-2.  **Install Frontend**:
-    ```bash
     npm install
     ```
-3.  **Fetch Training Data**:
+3.  **Fetch Data**:
     ```bash
     bash python_engine/get_data.sh
     ```
-4.  **Run Development Mode**:
+4.  **Run**:
     ```bash
     npm run tauri dev
     ```
 
 ---
 
-## ✨ Key Features
+## 📖 Documentation Suite
 
-*   **🚀 Dual-Engine Optimization**: Switch between Rust (CPU) for precision and PyTorch (GPU) for broad exploration.
-*   **🌡️ Real-Time Convergence**: Live telemetry and convergence graphs.
-*   **🧬 Biometric Weighting**: Tune SFB penalties, rolls, and hand balance.
-*   **📥 Presets**: Compare against QWERTY, Dvorak, and Colemak out of the box.
+We maintain a complete documentation ecosystem to help you get the most out of NeuroKey:
+
+*   **[🛠️ Installation Guide](INSTALLATION.md)**: System dependencies, toolchain setup, and OS-specific troubleshooting.
+*   **[🏗️ Development Architecture](DEVELOPMENT.md)**: Project structure, Tauri-React IPC bridge, and contribution guidelines.
+*   **[🔬 Algorithm Science](ALGORITHMS.md)**: Deep dive into the Simulated Annealing math and Ergonomic Cost Functions.
+*   **[📝 Roadmap](development.md)**: Our future plans for GPU acceleration and mobile support.
 
 ---
 
-## 🏗️ Project Architecture
+## 🧬 The Core Logic
 
-*   **`src-tauri/`**: High-performance Rust backend & IPC bridge.
-*   **`ui/`**: React-based dashboard with Recharts visualization.
-*   **`python_engine/`**: Neural sidecar logic and `requirements.txt`.
-*   **`.github/workflows/`**: Fedora-based CI/CD pipeline.
+NeuroKey doesn't just swap keys randomly. It calculates an **Ergonomic Score** based on real-world typing frequencies. It then uses a probabilistic "acceptance criterion" to escape local bad spots and find a global optimum for your specific typing style.
+
+> [!TIP]
+> Use the **Help Icons (`?`)** in the application dashboard to learn more about each parameter while you optimize!
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from ergonomics experts, Rustaceans, and UI designers! 
+
+1.  Fork the repository.
+2.  Follow the [Development Guide](DEVELOPMENT.md) to set up your environment.
+3.  Open a Pull Request with a clear description of your changes.
 
 ---
 
